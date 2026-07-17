@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}}}
+      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}}}
       ADMIN_PASSWORD: "MiSub_ahZ6lB673D8w"
-      COOKIE_SECRET: "c83ba381-4f90-45e3-b6c5-654e34a67b95"
+      COOKIE_SECRET: "fb8ce5d2-e7b2-47be-bd09-f622eab89685"
 
     steps:
       - name: Checkout
@@ -37,23 +37,32 @@ jobs:
 
       - name: Set KV cookie secret
         run: |
-          echo "Setting KV cookie secret..."
-          RESPONSE=$(curl -s -X PUT \
-            "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/storage/kv/namespaces/$MISUB_KV_NAMESPACE/bulk" \
+          curl -s -X PUT \
+            "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/storage/kv/namespaces/$MISUB_KV_NAMESPACE/keys/SYSTEM_COOKIE_SECRET/value" \
             -H "Authorization: Bearer $CF_API_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d '[{"key":"SYSTEM_COOKIE_SECRET","value":"'"$COOKIE_SECRET"'"}]')
-          echo "KV response: $RESPONSE"
+            -H "Content-Type: text/plain" \
+            -d '"fb8ce5d2-e7b2-47be-bd09-f622eab89685"'
         env:
-          MISUB_KV_NAMESPACE: ${{ secrets.MISUB_KV_NAMESPACE }}
+          MISUB_KV_NAMESPACE: ${{ secrets.MISUB_KV_NAMESPACE }}}}
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: misub-etc
-          directory: dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          branch: main
-          wranglerVersion: '4'
+        run: |
+          cd dist
+          zip -r ../deploy.zip .
+          cd ..
+          
+          # Get latest deployment ID for tracking
+          echo "Deploying to Cloudflare Pages..."
+          
+          # Upload and create deployment
+          ZIP_SIZE=$(wc -c < deploy.zip)
+          MANIFEST="[{"prefix":"",files":[]}"
+          
+          # Use wrangler to deploy
+          npx wrangler@4 pages deploy dist \
+            --project-name=misub-etc \
+            --branch=main \
+            --env-vars-json '{{
+              "ADMIN_PASSWORD": "MiSub_ahZ6lB673D8w",
+              "COOKIE_SECRET": "fb8ce5d2-e7b2-47be-bd09-f622eab89685"
+            }}'
