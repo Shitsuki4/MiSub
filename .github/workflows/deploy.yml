@@ -28,7 +28,8 @@ jobs:
         run: npm run build
 
       - name: Deploy with env vars
-        run: python3 - << 'PYEOF'
+        run: |
+          cat > deploy.py << 'PYEOF'
           import os, json, hashlib, zipfile, io, requests
 
           TOKEN = os.environ["CLOUDFLARE_API_TOKEN"]
@@ -40,7 +41,6 @@ jobs:
           D1_UUID = "6fb46716-f5e0-418b-8898-0b03c856825b"
           KV_ID = "63976dd1d1974a71895e9ca508df5334"
 
-          # Build manifest
           manifest_files = {}
           dist_dir = "dist"
           for root, dirs, files in os.walk(dist_dir):
@@ -72,7 +72,6 @@ jobs:
               "d1_databases": [{"binding": "MISUB_DB", "id": D1_UUID}],
           }
 
-          # Create zip
           zip_buffer = io.BytesIO()
           with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
               zf.writestr("__manifest.json", json.dumps(manifest))
@@ -85,7 +84,6 @@ jobs:
           zip_data = zip_buffer.getvalue()
           print(f"Zip size: {len(zip_data)} bytes")
 
-          # Upload deployment
           upload_url = f"https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/pages/projects/{PROJECT_NAME}/deployments"
 
           files = {
@@ -100,6 +98,7 @@ jobs:
           print(f"URL: {result.get('url')}")
           print(f"Env vars: {result.get('env_vars', [])}")
           PYEOF
+          python3 deploy.py
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
