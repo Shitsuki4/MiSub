@@ -28,27 +28,18 @@ jobs:
         run: npm run build
 
       - name: Deploy with env vars
-        run: python3 deploy.py
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-
-      - name: Create deploy script
-        run: |
-          cat > deploy.py << 'PYEOF'
-          import os, sys, json, hashlib, zipfile, io, requests
+        run: python3 - << 'PYEOF'
+          import os, json, hashlib, zipfile, io, requests
 
           TOKEN = os.environ["CLOUDFLARE_API_TOKEN"]
           ACCOUNT_ID = os.environ["CLOUDFLARE_ACCOUNT_ID"]
           PROJECT_NAME = "misub"
-          
+
           ADMIN_PASSWORD = "MiSub_ahZ6lB673D8w"
           COOKIE_SECRET = "BT~gIc$)VdjB7DOw-\tbQSJI_m=VBdI~PD7quhU8t{w2Nyqog,dN*SsL%LR&>3V1"
           D1_UUID = "6fb46716-f5e0-418b-8898-0b03c856825b"
           KV_ID = "63976dd1d1974a71895e9ca508df5334"
-          
-          headers = {"Authorization": f"Bearer {TOKEN}"}
-          
+
           # Build manifest
           manifest_files = {}
           dist_dir = "dist"
@@ -66,7 +57,7 @@ jobs:
                       ".ico": "image/x-icon", ".txt": "text/plain",
                   }
                   manifest_files[arcname] = {"hash": content_hash, "contentType": ct_map.get(ext, "application/octet-stream")}
-          
+
           manifest = {
               "name": PROJECT_NAME,
               "version": 1,
@@ -80,7 +71,7 @@ jobs:
               "kv_namespaces": [{"binding": "MISUB_KV", "id": KV_ID}],
               "d1_databases": [{"binding": "MISUB_DB", "id": D1_UUID}],
           }
-          
+
           # Create zip
           zip_buffer = io.BytesIO()
           with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -90,13 +81,13 @@ jobs:
                       file_path = os.path.join(root, file)
                       arcname = os.path.relpath(file_path, dist_dir)
                       zf.write(file_path, arcname)
-          
+
           zip_data = zip_buffer.getvalue()
           print(f"Zip size: {len(zip_data)} bytes")
-          
+
           # Upload deployment
           upload_url = f"https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/pages/projects/{PROJECT_NAME}/deployments"
-          
+
           files = {
               "manifest": (None, json.dumps(manifest)),
               "file": ("deploy.zip", zip_data, "application/zip"),
@@ -107,6 +98,8 @@ jobs:
           result = data.get("result", {})
           print(f"Deployment ID: {result.get('id')}")
           print(f"URL: {result.get('url')}")
-          print(f"Env vars in deployment: {result.get('env_vars', [])}")
+          print(f"Env vars: {result.get('env_vars', [])}")
           PYEOF
-        working-directory: .
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
