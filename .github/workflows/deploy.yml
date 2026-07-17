@@ -6,20 +6,28 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+  deployments: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      deployments: write
-    name: Deploy to Cloudflare Pages
+    timeout-minutes: 10
+    env:
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      ADMIN_PASSWORD: "MiSub_ahZ6lB673D8w"
+      COOKIE_SECRET: "c83ba381-4f90-45e3-b6c5-654e34a67b95"
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 22
 
       - name: Install dependencies
         run: npm ci
@@ -27,32 +35,25 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Set KV password and deploy
+      - name: Set KV cookie secret
         run: |
-          # Step 1: Set KV password
-          curl -s -X PUT "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces/63976dd1d1974a71895e9ca508df5334/values/SYSTEM_ADMIN_PASSWORD" \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            --data-raw '"MiSub_ahZ6lB673D8w"'
-          echo ""
-          echo "KV password set"
-          
-          # Step 2: Set ALL deployment configs (env_vars + kv + d1)
-          curl -s -X PATCH "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/misub/environments/production/deployment_configs" \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+          echo "Setting KV cookie secret..."
+          RESPONSE=$(curl -s -X PUT \
+            "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/storage/kv/namespaces/$MISUB_KV_NAMESPACE/bulk" \
+            -H "Authorization: Bearer $CF_API_TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{
-              "env_vars": [
-                {"key": "ADMIN_PASSWORD", "value": "MiSub_ahZ6lB673D8w"},
-                {"key": "COOKIE_SECRET", "value": "BT~gIc$)VdjB7DOw-\\tbQSJI_m=VBdI~PD7quhU8t{w2Nyqog,dN*SsL%LR&>3V1"}
-              ],
-              "kv_namespaces": [{"binding": "MISUB_KV", "id": "63976dd1d1974a71895e9ca508df5334"}],
-              "d1_databases": [{"binding": "MISUB_DB", "id": "6fb46716-f5e0-418b-8898-0b03c856825b"}]
-            }'
-          echo ""
-          echo "Deployment configs set"
-          
-          # Step 3: Deploy with wrangler
-          npx wrangler pages deploy dist --project-name=misub --branch=main
+            -d '[{"key":"SYSTEM_COOKIE_SECRET","value":"'"$COOKIE_SECRET"'"}]')
+          echo "KV response: $RESPONSE"
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          MISUB_KV_NAMESPACE: ${{ secrets.MISUB_KV_NAMESPACE }}
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          projectName: misub-etc
+          directory: dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
+          wranglerVersion: '4'
