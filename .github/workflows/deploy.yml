@@ -35,8 +35,8 @@ jobs:
 
       - name: Set environment variables
         run: |
-          curl -X PATCH "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/pages/projects/misub/environments/production/deployment_configs" \
-            -H "Authorization: Bearer $CF_API_TOKEN" \
+          curl -X PATCH "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/misub/environments/production/deployment_configs" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             -H "Content-Type: application/json" \
             -d '{
               "env_vars": [
