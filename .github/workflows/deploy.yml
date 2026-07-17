@@ -28,9 +28,7 @@ jobs:
         run: npm run build
 
       - name: Deploy to Cloudflare Pages
-        run: |
-          npx wrangler pages deploy dist --project-name=misub --branch=main \
-            --vars '{"ADMIN_PASSWORD":"MiSub_ahZ6lB673D8w","COOKIE_SECRET":"BT~gIc$)VdjB7DOw-\\tbQSJI_m=VBdI~PD7quhU8t{w2Nyqog,dN*SsL%LR&>3V1"}'
+        run: npx wrangler pages deploy dist --project-name=misub --branch=main
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
