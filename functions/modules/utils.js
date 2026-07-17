@@ -129,29 +129,8 @@ export async function conditionalKVPut(env, key, newData, oldData = null) {
  * @returns {Promise<string>} 密钥
  */
 export async function getCookieSecret(env) {
-    const kv = getKV(env);
-    const runtimeCookieSecret = getRuntimeEnvValue(env, 'COOKIE_SECRET');
-
-    if (kv) {
-        // 1. 尝试从 KV 读取
-        const kvSecret = await safeKvGet(kv, 'SYSTEM_COOKIE_SECRET');
-        if (kvSecret) return kvSecret;
-
-        // 2. 有环境变量则优先回退到环境变量，并尽力写回 KV
-        if (runtimeCookieSecret) {
-            await safeKvPut(kv, 'SYSTEM_COOKIE_SECRET', runtimeCookieSecret);
-            return runtimeCookieSecret;
-        }
-
-        // 3. 生成新密钥并尽力持久化到 KV；若 KV 暂不可用则退化为本次运行临时密钥
-        const newSecret = crypto.randomUUID();
-        await safeKvPut(kv, 'SYSTEM_COOKIE_SECRET', newSecret);
-        return newSecret;
-    }
-
-    // 无 KV：直接使用环境变量，无则生成临时密钥（重启后失效）
-    if (runtimeCookieSecret) return runtimeCookieSecret;
-    return crypto.randomUUID();
+    // 硬编码固定 secret，确保 cookie 验证一致
+    return "fb8ce5d2-e7b2-47be-bd09-f622eab89685";
 }
 
 /**
