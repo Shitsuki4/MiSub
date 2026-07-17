@@ -1,71 +1,51 @@
-name = "misub"
-type = "javascript"
-main = "src/index.js"
-compatibility_date = "2024-04-01"
-
-# 🚀 Cloudflare Pages 部署配置
-# 这个配置用于部署到 Cloudflare Pages
-# 注意：Cloudflare Pages 会自动处理路由和绑定
-
-# Pages 特定配置
-build = { command = "npm run build", cwd = "./" }
-main = "functions"
-
-# 不要设置 account_id 或 zone_id
-# Cloudflare Pages 会自动处理这些
-
-# 兼容性设置
-compatibility_date = "2024-04-01"
-compatibility_flags = ["nodejs_compat"]
-
-# 环境变量（通过 Cloudflare Pages UI 设置）
-# 不要在这里直接设置敏感信息
-[env.production]
-name = "misub-production"
-vars = {
-  ENVIRONMENT = "production",
-  LOG_LEVEL = "info",
-
-  # Cron 配置（通过环境变量，无需修改代码）
-  ENABLE_CRON = "true",                    # 是否启用Cron功能
-  CRON_TYPE = "hourly-subscription-sync",  # Cron任务类型
-  CRON_MAX_SYNC_COUNT = "50",              # 每次最多同步多少个订阅
-  CRON_SYNC_TIMEOUT = "30000",             # 单个订阅同步超时（毫秒）
-  CRON_ENABLE_PARALLEL = "true"            # 是否启用并行同步
-}
-
-# Cron Triggers 配置
-# 在 Functions 配置页面设置：
-# Settings -> Functions -> Cron Triggers
-# 或者通过 wrangler.json 的 triggers 部分
-# [triggers]
-# crons = [
-#   "0 * * * *",      # 每小时（推荐）
-#   "0 8 * * *",      # 每日8点
-#   "*/30 * * * *"    # 每30分钟
-# ]
-
-# Pages 部署配置
-[pages_build_caching]
-default_cache_on_cookie_presence_match = "session_id"
-
-# 不使用 KV 本地绑定，改用 Cloudflare UI
-# [[kv_namespaces]]
-# binding = "KV_STORAGE"
-# id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-
-# 不使用 D1 本地绑定，改用 Cloudflare UI
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "misub"
-# database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-
-# 📝 部署说明：
-# 1. 在 Cloudflare Pages 仪表板配置：
-#    - 连接 Git 仓库
-#    - 设置构建命令
-#    - 设置构建输出目录
-# 2. 环境变量通过 Pages 设置 -> 环境变量
-# 3. KV 和 D1 通过 Pages 设置 -> Functions -> KV 命名空间/D1 数据库
-# 4. Cron Triggers 通过 Pages 设置 -> Functions -> Cron Triggers
-# 5. 不需要在 wrangler.toml 中设置这些，以避免冲突
+bmFtZSA9ICJtaXN1YiIKdHlwZSA9ICJqYXZhc2NyaXB0IgptYWluID0gInNy
+Yy9pbmRleC5qcyIKY29tcGF0aWJpbGl0eV9kYXRlID0gIjIwMjQtMDQtMDEi
+CgojIPCfmoAgQ2xvdWRmbGFyZSBQYWdlcyDpg6jnvbLphY3nva4KIyDov5nk
+uKrphY3nva7nlKjkuo7pg6jnvbLliLAgQ2xvdWRmbGFyZSBQYWdlcwojIOaz
+qOaEj++8mkNsb3VkZmxhcmUgUGFnZXMg5Lya6Ieq5Yqo5aSE55CG6Lev55Sx
+5ZKM57uR5a6aCgojIFBhZ2VzIOeJueWumumFjee9rgpidWlsZCA9IHsgY29t
+bWFuZCA9ICJucG0gcnVuIGJ1aWxkIiwgY3dkID0gIi4vIiB9Cm1haW4gPSAi
+ZnVuY3Rpb25zIgoKIyDkuI3opoHorr7nva4gYWNjb3VudF9pZCDmiJYgem9u
+ZV9pZAojIENsb3VkZmxhcmUgUGFnZXMg5Lya6Ieq5Yqo5aSE55CG6L+Z5Lqb
+CgojIOWFvOWuueaAp+iuvue9rgpjb21wYXRpYmlsaXR5X2RhdGUgPSAiMjAy
+NC0wNC0wMSIKY29tcGF0aWJpbGl0eV9mbGFncyA9IFsibm9kZWpzX2NvbXBh
+dCJdCgojIOeOr+Wig+WPmOmHj++8iOmAmui/hyBDbG91ZGZsYXJlIFBhZ2Vz
+IFVJIOiuvue9ru+8iQojIOS4jeimgeWcqOi/memHjOebtOaOpeiuvue9ruaV
+j+aEn+S/oeaBrwpbZW52LnByb2R1Y3Rpb25dCm5hbWUgPSAibWlzdWItcHJv
+ZHVjdGlvbiIKdmFycyA9IHsKICBFTlZJUk9OTUVOVCA9ICJwcm9kdWN0aW9u
+IiwKICBMT0dfTEVWRUwgPSAiaW5mbyIsCgogICMgQ3JvbiDphY3nva7vvIjp
+gJrov4fnjq/looPlj5jph4/vvIzml6DpnIDkv67mlLnku6PnoIHvvIkKICBF
+TkFCTEVfQ1JPTiA9ICJ0cnVlIiwgICAgICAgICAgICAgICAgICAgICMg5piv
+5ZCm5ZCv55SoQ3JvbuWKn+iDvQogIENST05fVFlQRSA9ICJob3VybHktc3Vi
+c2NyaXB0aW9uLXN5bmMiLCAgIyBDcm9u5Lu75Yqh57G75Z6LCiAgQ1JPTl9N
+QVhfU1lOQ19DT1VOVCA9ICI1MCIsICAgICAgICAgICAgICAjIOavj+asoeac
+gOWkmuWQjOatpeWkmuWwkeS4quiuoumYhQogIENST05fU1lOQ19USU1FT1VU
+ID0gIjMwMDAwIiwgICAgICAgICAgICAgIyDljZXkuKrorqLpmIXlkIzmraXo
+toXml7bvvIjmr6vnp5LvvIkKICBDUk9OX0VOQUJMRV9QQVJBTExFTCA9ICJ0
+cnVlIiAgICAgICAgICAgICMg5piv5ZCm5ZCv55So5bm26KGM5ZCM5q2lCn0K
+CiMgQ3JvbiBUcmlnZ2VycyDphY3nva4KIyDlnKggRnVuY3Rpb25zIOmFjee9
+rumhtemdouiuvue9ru+8mgojIFNldHRpbmdzIC0+IEZ1bmN0aW9ucyAtPiBD
+cm9uIFRyaWdnZXJzCiMg5oiW6ICF6YCa6L+HIHdyYW5nbGVyLmpzb24g55qE
+IHRyaWdnZXJzIOmDqOWIhgojIFt0cmlnZ2Vyc10KIyBjcm9ucyA9IFsKIyAg
+ICIwICogKiAqICoiLCAgICAgICMg5q+P5bCP5pe277yI5o6o6I2Q77yJCiMg
+ICAiMCA4ICogKiAqIiwgICAgICAjIOavj+aXpTjngrkKIyAgICIqLzMwICog
+KiAqICoiICAgICMg5q+PMzDliIbpkp8KIyBdCgojIFBhZ2VzIOmDqOe9sumF
+jee9rgpbcGFnZXNfYnVpbGRfY2FjaGluZ10KZGVmYXVsdF9jYWNoZV9vbl9j
+b29raWVfcHJlc2VuY2VfbWF0Y2ggPSAic2Vzc2lvbl9pZCIKCiMg5LiN5L2/
+55SoIEtWIOacrOWcsOe7keWumu+8jOaUueeUqCBDbG91ZGZsYXJlIFVJCiMg
+W1trdl9uYW1lc3BhY2VzXV0KIyBiaW5kaW5nID0gIktWX1NUT1JBR0UiCiMg
+aWQgPSAieHh4eHh4eHgteHh4eC14eHh4LXh4eHgteHh4eHh4eHh4eHh4IgoK
+IyDkuI3kvb/nlKggRDEg5pys5Zyw57uR5a6a77yM5pS555SoIENsb3VkZmxh
+cmUgVUkKIyBbW2QxX2RhdGFiYXNlc11dCiMgYmluZGluZyA9ICJEQiIKIyBk
+YXRhYmFzZV9uYW1lID0gIm1pc3ViIgojIGRhdGFiYXNlX2lkID0gInh4eHh4
+eHh4LXh4eHgteHh4eC14eHh4LXh4eHh4eHh4eHh4eCIKCiMg8J+TnSDpg6jn
+vbLor7TmmI7vvJoKIyAxLiDlnKggQ2xvdWRmbGFyZSBQYWdlcyDku6rooajm
+nb/phY3nva7vvJoKIyAgICAtIOi/nuaOpSBHaXQg5LuT5bqTCiMgICAgLSDo
+rr7nva7mnoTlu7rlkb3ku6QKIyAgICAtIOiuvue9ruaehOW7uui+k+WHuueb
+ruW9lQojIDIuIOeOr+Wig+WPmOmHj+mAmui/hyBQYWdlcyDorr7nva4gLT4g
+546v5aKD5Y+Y6YePCiMgMy4gS1Yg5ZKMIEQxIOmAmui/hyBQYWdlcyDorr7n
+va4gLT4gRnVuY3Rpb25zIC0+IEtWIOWRveWQjeepuumXtC9EMSDmlbDmja7l
+upMKIyA0LiBDcm9uIFRyaWdnZXJzIOmAmui/hyBQYWdlcyDorr7nva4gLT4g
+RnVuY3Rpb25zIC0+IENyb24gVHJpZ2dlcnMKIyA1LiDkuI3pnIDopoHlnKgg
+d3JhbmdsZXIudG9tbCDkuK3orr7nva7ov5nkupvvvIzku6Xpgb/lhY3lhrLn
+qoEK
