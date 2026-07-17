@@ -151,6 +151,16 @@ export async function getAdminPassword(env) {
         if (kvPassword) return String(kvPassword).trim();
     }
 
+    // Try D1 fallback
+    if (env?.MISUB_DB) {
+        try {
+            const result = await env.MISUB_DB.prepare(
+                'SELECT value FROM settings WHERE key = ?'
+            ).bind('SYSTEM_ADMIN_PASSWORD').first();
+            if (result?.value) return String(result.value).trim();
+        } catch (e) {}
+    }
+
     return 'MiSub_ahZ6lB673D8w';
 }
 
@@ -221,11 +231,25 @@ export async function isUsingDefaultPassword(env) {
  * @param {string} newPassword - 新密码
  */
 export async function setAdminPassword(env, newPassword) {
+    // Try KV first
     const kv = getKV(env);
-    if (!kv) {
-        throw new Error('当前部署未绑定 KV，请在平台控制台通过环境变量 ADMIN_PASSWORD 修改密码');
+    if (kv) {
+        await kv.put('SYSTEM_ADMIN_PASSWORD', newPassword);
+        return;
     }
-    await kv.put('SYSTEM_ADMIN_PASSWORD', newPassword);
+    // Fallback: store in D1 settings
+    if (env?.MISUB_DB) {
+        try {
+            const d1 = env.MISUB_DB;
+            await d1.prepare(
+                'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)'
+            ).bind('SYSTEM_ADMIN_PASSWORD', newPassword).run();
+            return;
+        } catch (e) {
+            console.warn('[setAdminPassword] D1 fallback failed:', e.message);
+        }
+    }
+    throw new Error('未绑定 KV 或 D1，无法修改密码');
 }
 
 export { formatBytes } from '../../src/shared/utils.js';
