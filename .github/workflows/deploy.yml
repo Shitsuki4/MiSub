@@ -27,16 +27,33 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Deploy to Cloudflare Pages with env vars
+      - name: Deploy to Cloudflare Pages with env vars via API
         run: |
-          # Create a temporary .dev.vars file with our secrets
-          cat > .dev.vars << EOF
-          ADMIN_PASSWORD=MiSub_ahZ6lB673D8w
-          COOKIE_SECRET=BT~gIc\$)VdjB7DOw-\	bQSJI_m=VBdI~PD7quhU8t{w2Nyqog,dN*SsL%LR&>3V1
-          EOF
+          # Package dist into a zip
+          cd dist && zip -r ../deploy.zip . && cd ..
           
-          # Deploy with wrangler, which will read .dev.vars
-          npx wrangler pages deploy dist --project-name=misub --branch=main
+          # Create manifest
+          python3 << 'PYEOF'
+          import os, json, hashlib
+          manifest = {"name": "misub", "version": 1, "files": {}}
+          for root, dirs, files in os.walk("dist"):
+              for f in files:
+                  fp = os.path.join(root, f)
+                  arc = os.path.relpath(fp, "dist")
+                  with open(fp, "rb") as fh:
+                      manifest["files"][arc] = {"hash": hashlib.sha256(fh.read()).hexdigest()}
+          with open("manifest.json", "w") as fh:
+              json.dump(manifest, fh)
+          PYEOF
+          
+          # Deploy with env vars via Cloudflare Pages API
+          curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/misub/deployments" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -F "manifest=@manifest.json" \
+            -F "file=@deploy.zip"
+          
+          echo ""
+          echo "Deployment submitted"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
