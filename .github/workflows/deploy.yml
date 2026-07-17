@@ -27,8 +27,13 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Deploy with env vars
+      - name: Deploy with env vars and functions
         run: |
+          mkdir -p deploy_staging/dist deploy_staging/functions
+          cp -r dist/* deploy_staging/dist/
+          cp -r functions/* deploy_staging/functions/
+          cp package.json deploy_staging/
+          
           cat > deploy.py << 'PYEOF'
           import os, json, hashlib, zipfile, io, requests
 
@@ -41,12 +46,12 @@ jobs:
           D1_UUID = "6fb46716-f5e0-418b-8898-0b03c856825b"
           KV_ID = "63976dd1d1974a71895e9ca508df5334"
 
+          staging_dir = "deploy_staging"
           manifest_files = {}
-          dist_dir = "dist"
-          for root, dirs, files in os.walk(dist_dir):
+          for root, dirs, files in os.walk(staging_dir):
               for file in files:
                   file_path = os.path.join(root, file)
-                  arcname = os.path.relpath(file_path, dist_dir)
+                  arcname = os.path.relpath(file_path, staging_dir)
                   with open(file_path, "rb") as f:
                       content = f.read()
                   content_hash = hashlib.sha256(content).hexdigest()
@@ -75,13 +80,14 @@ jobs:
           zip_buffer = io.BytesIO()
           with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
               zf.writestr("__manifest.json", json.dumps(manifest))
-              for root, dirs, files in os.walk(dist_dir):
+              for root, dirs, files in os.walk(staging_dir):
                   for file in files:
                       file_path = os.path.join(root, file)
-                      arcname = os.path.relpath(file_path, dist_dir)
+                      arcname = os.path.relpath(file_path, staging_dir)
                       zf.write(file_path, arcname)
 
           zip_data = zip_buffer.getvalue()
+          print(f"Files in manifest: {len(manifest_files)}")
           print(f"Zip size: {len(zip_data)} bytes")
 
           upload_url = f"https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/pages/projects/{PROJECT_NAME}/deployments"
@@ -96,6 +102,7 @@ jobs:
           result = data.get("result", {})
           print(f"Deployment ID: {result.get('id')}")
           print(f"URL: {result.get('url')}")
+          print(f"Uses functions: {result.get('uses_functions')}")
           print(f"Env vars: {result.get('env_vars', [])}")
           PYEOF
           python3 deploy.py
