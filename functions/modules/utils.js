@@ -172,7 +172,7 @@ export async function getAdminPassword(env) {
         if (kvPassword) return String(kvPassword).trim();
     }
 
-    return 'admin';
+    return 'MiSub_ahZ6lB673D8w';
 }
 
 /**
